@@ -4,7 +4,10 @@ const amqp = require('amqplib');
 const path = require('path');
 const { Sequelize, DataTypes } = require('sequelize');
 
-const sequelize = new Sequelize('mysql://root:mysql2024@localhost:3306/product');
+const sequelize = new Sequelize('product', 'root', 'mysql2024', {
+  host: 'localhost',
+  dialect: 'mysql'
+});
 
 const Product = sequelize.define('products', {
   name: {
@@ -26,38 +29,8 @@ app.use(bodyParser.json());
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
-// Connect to RabbitMQ
-setTimeout(() => {
-  amqp.connect('amqp://rabbitmq:5672', (error0, connection) => {
-    if (error0) {
-      throw error0;
-    }
-
-    connection.createChannel((error1, channel) => {
-      if (error1) {
-        throw error1;
-      }
-
-      const queue = 'products';
-      
-      channel.assertQueue(queue, {
-        durable: false
-      });
-  
-      // Receive message
-      channel.consume(queue, (message) => {
-        console.log('Received message: ', message.content.toString());
-      }, {
-        noAck: true
-      });
-      
-    });
-  });
-}, 5000);
-
-
-// Connect to RabbitMQ
-/*amqp.connect('amqp://rabbitmq:5672', (error0, connection) => {
+// Connection with RabbitMQ
+amqp.connect('amqp://rabbitmq:5672', (error0, connection) => {
   if (error0) {
     throw error0;
   }
@@ -75,22 +48,26 @@ setTimeout(() => {
     // Receive message
     channel.consume(queue, (message) => {
       console.log('Received message: ', message.content.toString());
+
+      // Send confirmation message to RabbitMQ
+      const confirmChannel = connection.createChannel();
+      const confirmQueue = 'orders';
+      const msg = 'Order processed';
+      confirmChannel.sendToQueue(confirmQueue, Buffer.from(msg));
     }, {
       noAck: true
     });
   });
-});*/
+});
 
 // API endpoint for root path
 app.get('/', async (req, res) => {
-  //res.status(200).json({ message: 'Welcome to the Product Service API' });
   res.render('index'); 
 });
 
 // API endpoint to get all products
 app.get('/products', async (req, res) => { 
   const products = await Product.findAll(); 
-  //res.status(200).json(products);
   res.render('products', { products }); 
 });
 
@@ -118,7 +95,6 @@ app.post('/product', async (req, res) => {
 
       res.redirect('/products');
   } catch (error) {
-      //return res.status(500).json({ error: 'Failed to create product' });
       res.redirect('/products');
   }
 });
@@ -129,5 +105,3 @@ app.post('/product', async (req, res) => {
     console.log('Product service running on port 3000');
   });
 })();
-
-//module.exports = Product;
