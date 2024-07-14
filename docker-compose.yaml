@@ -1,35 +1,31 @@
-version: '3'
+version: '3.9'
 
 services:
   product-service:
-    image: product-service
     build: 
       context: ./msv-product
       dockerfile: Dockerfile
     container_name: product
     ports:
-      - "3001:3000"
-    links:
+      - "3000:3000"
+    depends_on:
       - rabbitmq
+      - mysql
     networks:
       - app-network
-    depends_on:
-      - mysql-product
   
   order-service:
-    image: order-service
     build: 
       context: ./msv-order
       dockerfile: Dockerfile
     container_name: order
     ports:
-      - "3002:3001"
-    links:
+      - "3001:3001"
+    depends_on:
       - rabbitmq
+      - mysql
     networks:
       - app-network
-    depends_on:
-      - mysql-order
   
   rabbitmq:
       image: "rabbitmq:3-management"
@@ -37,35 +33,16 @@ services:
       ports:
         - "5672:5672"
         - "15672:15672"
-      command: rabbitmq-server
-      healthcheck:
-        test: ["CMD", "nc", "-z", "localhost", "5672"]
-        interval: 30s
-        retries: 10
       networks:
         - app-network
   
-  mysql-product:
+  mysql:
     image: mysql:latest
-    container_name: mysql-product
-    ports:
-      - "3307:3306"
+    container_name: mysql
     environment:
-      MYSQL_ROOT_PASSWORD: mysql2024
-      MYSQL_DATABASE: product
-      MYSQL_HOST: mysql-product
-    networks:
-      - app-network
-
-  mysql-order:
-    image: mysql:latest
-    container_name: mysql-order
-    ports:
-      - "3308:3306"
-    environment:
-      MYSQL_ROOT_PASSWORD: mysql2024
-      MYSQL_DATABASE: order
-      MYSQL_HOST: mysql-order
+      - MYSQL_ROOT_PASSWORD=mysql2024
+      - MYSQL_DATABASE=product
+      - MYSQL_DATABASE=order
     networks:
       - app-network
 
