@@ -30,35 +30,27 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
 // Connection with RabbitMQ
-amqp.connect('amqp://rabbitmq:5672', (error0, connection) => {
-  if (error0) {
-    throw error0;
-  }
-  connection.createChannel((error1, channel) => {
-    if (error1) {
-      throw error1;
-    }
-
-    const queue = 'products';
-
-    channel.assertQueue(queue, {
-      durable: false
-    });
-
-    // Receive message
-    channel.consume(queue, (message) => {
-      console.log('Received message: ', message.content.toString());
-
-      // Send confirmation message to RabbitMQ
-      const confirmChannel = connection.createChannel();
-      const confirmQueue = 'orders';
-      const msg = 'Order processed';
-      confirmChannel.sendToQueue(confirmQueue, Buffer.from(msg));
-    }, {
-      noAck: true
-    });
-  });
-});
+amqp.connect('amqp://rabbitmq:5672')
+  .then((connection) => {
+    connection.createChannel()
+      .then((channel) => {
+        const queue = 'products';
+        channel.assertQueue(queue, {
+          durable: false
+        });
+        
+        channel.consume(queue, (message) => {
+          console.log('Received message: ', message.content.toString());
+          
+          // Send confirmation message to RabbitMQ
+          const confirmChannel = connection.createChannel();
+          const confirmQueue = 'orders';
+          const msg = 'Order processed';
+          confirmChannel.sendToQueue(confirmQueue, Buffer.from(msg));
+        });
+      });
+  })
+  .catch((error) => console.error(error));
 
 // API endpoint for root path
 app.get('/', async (req, res) => {
