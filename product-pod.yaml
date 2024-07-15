@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: product-pod
+spec:
+  containers:
+    - name: product-service
+      image: product
+      ports:
+        - containerPort: 3000
+    - name: rabbitmq
+      image: rabbitmq:3-management
+      ports:
+        - containerPort: 5672
+        - containerPort: 15672
+    - name: mysql
+      image: mysql:latest
+      env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: mysql2024
+        - name: MYSQL_DATABASE
+          value: product
+  restartPolicy: Never

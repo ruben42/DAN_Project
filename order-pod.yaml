@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: order-pod
+spec:
+  containers:
+    - name: order-service
+      image: order
+      ports:
+        - containerPort: 3001
+    - name: rabbitmq
+      image: rabbitmq:3-management
+      ports:
+        - containerPort: 5672
+        - containerPort: 15672
+    - name: mysql1
+      image: mysql:latest
+      env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: mysql2024
+        - name: MYSQL_DATABASE
+          value: order
+  restartPolicy: Never
