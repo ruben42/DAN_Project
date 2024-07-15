@@ -5,7 +5,8 @@ services:
     build: 
       context: ./msv-product
       dockerfile: Dockerfile
-    container_name: product
+    container_name: product-service
+    image: product
     ports:
       - "3000:3000"
     depends_on:
@@ -18,12 +19,13 @@ services:
     build: 
       context: ./msv-order
       dockerfile: Dockerfile
-    container_name: order
+    container_name: order-service
+    image: order
     ports:
       - "3001:3001"
     depends_on:
       - rabbitmq
-      - mysql
+      - mysql1
     networks:
       - app-network
   
@@ -39,10 +41,22 @@ services:
   mysql:
     image: mysql:latest
     container_name: mysql
+    ports:
+      - "3306:3006"
     environment:
-      - MYSQL_ROOT_PASSWORD=mysql2024
-      - MYSQL_DATABASE=product
-      - MYSQL_DATABASE=order
+      MYSQL_ROOT_PASSWORD: mysql2024
+      MYSQL_DATABASE: product 
+    networks:
+      - app-network
+
+  mysql1:
+    image: mysql:latest
+    container_name: mysql1
+    ports:
+      - "3307:3006"
+    environment:
+      MYSQL_ROOT_PASSWORD: mysql2024
+      MYSQL_DATABASE: order 
     networks:
       - app-network
 
